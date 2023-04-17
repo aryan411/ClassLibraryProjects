@@ -1,0 +1,34 @@
+trigger:
+- main
+
+variables:
+  buildConfiguration: 'Release'
+  versionNumber: '1.0.0'
+
+steps:
+- task: DotNetCoreCLI@2
+  displayName: 'Restore NuGet packages'
+  inputs:
+    command: restore
+    projects: '**/*.csproj'
+    feedsToUse: 'select'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Build NuGet package'
+  inputs:
+    command: pack
+    packagesToPack: '**/*.csproj'
+    versionSuffix: $(Build.BuildNumber)
+
+- task: NuGetAuthenticate@0
+  displayName: 'Authenticate with NuGet feed'
+  inputs:
+    nuGetServiceConnections: 'MyNuGetServiceConnection'
+
+- task: NuGetCommand@2
+  displayName: 'Push NuGet package to feed'
+  inputs:
+    command: push
+    packagesToPush: '$(Build.ArtifactStagingDirectory)/*.nupkg'
+    nuGetFeedType: 'internal'
+    publishVstsFeed: 'MyArtifactsFeed'
